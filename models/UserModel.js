@@ -1,6 +1,6 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose from 'mongoose';
 
-const UserSchema = new Schema({
+const UserSchema = new mongoose.Schema({
 	firstName: {
 		type: String,
 		required: true,
@@ -31,6 +31,8 @@ const UserSchema = new Schema({
 		type: String,
 		default: '/images/profilePic.png',
 	},
+},{
+    timestamps: true
 });
 
 const User = mongoose.model('User', UserSchema);
