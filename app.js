@@ -1,14 +1,15 @@
 import express from 'express';
-import bodyParser from 'body-parser';
 import { requireLogin } from './middlewares.js';
-
-const { urlencoded } = bodyParser;
-
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+dotenv.config();
 // Import Routes
 import loginRoutes from './routes/loginRoutes.js';
-import registerRoutes from './routes/registerRoutes.js'
+import registerRoutes from './routes/registerRoutes.js';
 
-import path from 'path'
+import path from 'path';
+import DB from './db.js';
+
 const app = express();
 
 // This allows to read from body (req.body)
@@ -33,10 +34,10 @@ app.use('/login', loginRoutes);
 app.use('/register', registerRoutes);
 
 // __dirname is not available if not using esModules , only available if using common js.
-const __dirname = path.resolve()
+const __dirname = path.resolve();
 
 // Serve Static Files
-app.use(express.static(path.join(__dirname, "public")))
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', requireLogin, (req, res, next) => {
 	// Payload is just a term used to refer to a data that we are sending to a function or to a page or through request or something like that.
