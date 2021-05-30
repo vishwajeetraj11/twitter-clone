@@ -15,5 +15,14 @@ app.set("view engine", "pug");
 app.set("views", "views")
 
 app.get("/", (req,res, next) => {
-    res.status(200).render("home")
+
+    // Payload is just a term used to refer to a data that we are sending to a function or to a page or through request or something like that.
+    const payload = {
+        pageTitle: 'Home'
+    }
+
+    // Render function takes two parameters 
+    // 1. View
+    // 2. Payload (any data that we want to send to that page)
+    res.status(200).render("home", payload)
 })
