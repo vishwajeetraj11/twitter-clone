@@ -1,5 +1,8 @@
 import express from 'express';
+import bodyParser from 'body-parser';
 import { requireLogin } from './middlewares.js';
+
+const { urlencoded } = bodyParser;
 
 // Import Routes
 import loginRoutes from './routes/loginRoutes.js';
@@ -7,6 +10,11 @@ import registerRoutes from './routes/registerRoutes.js'
 
 import path from 'path'
 const app = express();
+
+// This allows to read from body (req.body)
+// app.use(express.json())
+// this works in case of pug ->
+app.use(express.urlencoded({ extended: false }));
 
 const port = 3000;
 
