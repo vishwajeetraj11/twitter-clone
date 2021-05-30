@@ -6,8 +6,9 @@ dotenv.config();
 // Import Routes
 import loginRoutes from './routes/loginRoutes.js';
 import registerRoutes from './routes/registerRoutes.js';
-
 import path from 'path';
+import session from 'express-session'
+
 import DB from './db.js';
 
 const app = express();
@@ -22,6 +23,16 @@ const port = 3000;
 const server = app.listen(port, () => {
 	console.log(`Server listening on port: ${port}`);
 });
+
+// Sessions
+app.use(session({
+	secret: 'I_D_K_I_WAS_PRETTY_BORED_TO_TYPE_OUT_A_SECRET',
+	// resave forces the session to be saved even when the session wasn't modified the service request.
+	// It saves the session back to the storage even when the session didn't get modified at any point during that request.
+	resave: true,
+	// saveUninitialized just prevents it from saving sessions as uninitialized. So, if it wasn't set it would still save it as initialized which takes up space. But if it's not set, we just don't want to save to anything.
+	saveUninitialized: false
+}))
 
 // Setting pug as templating engine
 app.set('view engine', 'pug');
