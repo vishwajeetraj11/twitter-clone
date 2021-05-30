@@ -54,6 +54,8 @@ app.get('/', requireLogin, (req, res, next) => {
 	// Payload is just a term used to refer to a data that we are sending to a function or to a page or through request or something like that.
 	const payload = {
 		pageTitle: 'Home',
+		// session.user is set either in login or signup
+		userLoggedIn: req.session.user
 	};
 
 	// Render function takes two parameters
