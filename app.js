@@ -1,6 +1,10 @@
 import express from 'express';
 import { requireLogin } from './middlewares.js';
+
+// Import Routes
 import loginRoutes from './routes/loginRoutes.js';
+import registerRoutes from './routes/registerRoutes.js'
+
 import path from 'path'
 const app = express();
 
@@ -18,6 +22,7 @@ app.set('views', 'views');
 
 // Routes
 app.use('/login', loginRoutes);
+app.use('/register', registerRoutes);
 
 // __dirname is not available if not using esModules , only available if using common js.
 const __dirname = path.resolve()
