@@ -173,6 +173,7 @@ nav a:hover {
 .postFooter {
 	display: flex;
 	align-items: center;
+	margin-top: 5px;
 }
 
 .postFooter .postButtonContainer {
