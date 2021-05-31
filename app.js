@@ -9,7 +9,7 @@ import session from 'express-session';
 import loginRoutes from './routes/loginRoutes.js';
 import logout from './routes/logout.js';
 import registerRoutes from './routes/registerRoutes.js';
-import postRoutes from './routes/api/posts.js';
+import tweetRoutes from './routes/api/tweets.js';
 
 import DB from './db.js';
 dotenv.config();
@@ -51,7 +51,7 @@ app.use('/logout', logout);
 app.use('/register', registerRoutes);
 
 // API Routes
-app.use('/api/posts', postRoutes);
+app.use('/api/tweets', tweetRoutes);
 
 // __dirname is not available if not using esModules , only available if using common js.
 const __dirname = path.resolve();

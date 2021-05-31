@@ -19,10 +19,10 @@ $('#submitPostButton').click((event) => {
 	var textbox = $('#postTextarea');
 
 	var data = {
-		// content: textbox.val(),
+		content: textbox.val(),
 	};
 
-	$.post('/api/posts', data, (postData, status, xhr) => {
-		alert(postData);
+	$.post('/api/tweets', data, (postData, status, xhr) => {
+		console.log(postData);
 	});
 });

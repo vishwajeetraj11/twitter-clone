@@ -1,8 +1,8 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const Schema = mongoose.Schema;
 
-const PostSchema = new Schema(
+const TweetSchema = new Schema(
 	{
 		content: { type: String, trim: true },
 		postedBy: { type: Schema.Types.ObjectId, ref: 'User' },
@@ -11,5 +11,5 @@ const PostSchema = new Schema(
 	{ timestamps: true }
 );
 
-var Post = mongoose.model('Post', PostSchema);
-module.exports = Post;
+var Tweet = mongoose.model('Tweet', TweetSchema);
+export default Tweet;
