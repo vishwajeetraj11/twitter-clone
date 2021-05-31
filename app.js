@@ -5,9 +5,10 @@ import dotenv from 'dotenv';
 dotenv.config();
 // Import Routes
 import loginRoutes from './routes/loginRoutes.js';
+import logout from './routes/logout.js';
 import registerRoutes from './routes/registerRoutes.js';
 import path from 'path';
-import session from 'express-session'
+import session from 'express-session';
 
 import DB from './db.js';
 
@@ -25,14 +26,16 @@ const server = app.listen(port, () => {
 });
 
 // Sessions
-app.use(session({
-	secret: 'I_D_K_I_WAS_PRETTY_BORED_TO_TYPE_OUT_A_SECRET',
-	// resave forces the session to be saved even when the session wasn't modified the service request.
-	// It saves the session back to the storage even when the session didn't get modified at any point during that request.
-	resave: true,
-	// saveUninitialized just prevents it from saving sessions as uninitialized. So, if it wasn't set it would still save it as initialized which takes up space. But if it's not set, we just don't want to save to anything.
-	saveUninitialized: false
-}))
+app.use(
+	session({
+		secret: 'I_D_K_I_WAS_PRETTY_BORED_TO_TYPE_OUT_A_SECRET',
+		// resave forces the session to be saved even when the session wasn't modified the service request.
+		// It saves the session back to the storage even when the session didn't get modified at any point during that request.
+		resave: true,
+		// saveUninitialized just prevents it from saving sessions as uninitialized. So, if it wasn't set it would still save it as initialized which takes up space. But if it's not set, we just don't want to save to anything.
+		saveUninitialized: false,
+	})
+);
 
 // Setting pug as templating engine
 app.set('view engine', 'pug');
@@ -42,6 +45,7 @@ app.set('views', 'views');
 
 // Routes
 app.use('/login', loginRoutes);
+app.use('/logout', logout);
 app.use('/register', registerRoutes);
 
 // __dirname is not available if not using esModules , only available if using common js.
@@ -55,7 +59,7 @@ app.get('/', requireLogin, (req, res, next) => {
 	const payload = {
 		pageTitle: 'Home',
 		// session.user is set either in login or signup
-		userLoggedIn: req.session.user
+		userLoggedIn: req.session.user,
 	};
 
 	// Render function takes two parameters
