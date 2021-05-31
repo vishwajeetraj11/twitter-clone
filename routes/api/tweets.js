@@ -7,6 +7,7 @@ const router = express.Router();
 router.get('/', (req, res, next) => {
 	Tweet.find()
 		.populate({ path: 'postedBy' }) // populate('postedBy')
+		.sort({ createdAt: -1 })
 		.then((tweets) => res.status(200).send(tweets))
 		.catch((error) => {
 			console.log(error);
