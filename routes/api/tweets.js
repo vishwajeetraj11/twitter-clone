@@ -4,7 +4,14 @@ import Tweet from '../../models/TweetModel.js';
 
 const router = express.Router();
 
-router.get('/', (req, res, next) => {});
+router.get('/', (req, res, next) => {
+	Tweet.find()
+		.then((results) => res.status(200).send(results))
+		.catch((error) => {
+			console.log(error);
+			res.sendStatus(400);
+		});
+});
 
 router.post('/', async (req, res, next) => {
 	if (!req.body.content) {
