@@ -2,15 +2,17 @@ import express from 'express';
 import { requireLogin } from './middlewares.js';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-dotenv.config();
+import path from 'path';
+import session from 'express-session';
+
 // Import Routes
 import loginRoutes from './routes/loginRoutes.js';
 import logout from './routes/logout.js';
 import registerRoutes from './routes/registerRoutes.js';
-import path from 'path';
-import session from 'express-session';
+import postRoutes from './routes/api/posts.js';
 
 import DB from './db.js';
+dotenv.config();
 
 const app = express();
 
@@ -47,6 +49,9 @@ app.set('views', 'views');
 app.use('/login', loginRoutes);
 app.use('/logout', logout);
 app.use('/register', registerRoutes);
+
+// API Routes
+app.use('/api/posts', postRoutes);
 
 // __dirname is not available if not using esModules , only available if using common js.
 const __dirname = path.resolve();
