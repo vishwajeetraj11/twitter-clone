@@ -59,6 +59,32 @@ $(document).on('click', '.likeButton', (event) => {
 	});
 });
 
+// Retweet
+$(document).on('click', '.retweetButton', (event) => {
+	const button = $(event.target);
+	const postId = getPostIdFromElement(button);
+
+	if (postId === undefined) return;
+
+	// there is no $.put() request
+	// $.put('/', )
+
+	$.ajax({
+		url: `/api/tweets/${postId}/retweet`,
+		type: 'POST',
+		success: (postData) => {
+			console.log(postData);
+			// button.find('span').text(postData.likes.length || '');
+			// // userLoggedIn is injected in mainLayout pug and is global
+			// if (postData.likes.includes(userLoggedIn._id)) {
+			// 	button.addClass('active');
+			// } else {
+			// 	button.removeClass('active');
+			// }
+		},
+	});
+});
+
 function getPostIdFromElement(element) {
 	const isRootElement = element.hasClass('post');
 	// closest is a jQuery function that goes up through the tree to find a parent with a specified selector
@@ -100,12 +126,12 @@ function createPostHtml(postData) {
                         </div>
                         <div class='postFooter'>
 							<div class='postButtonContainer green'>
-                                <button class='retweetButton'>
+                                <button class=''>
                                     <i class='far fa-comment'></i>
                                 </button>
                             </div>
                             <div class='postButtonContainer'>
-                                <button>
+                                <button class='retweetButton'>
                                     <i class='fas fa-retweet'></i>
                                 </button>
                             </div>
