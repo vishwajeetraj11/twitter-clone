@@ -30,12 +30,37 @@ $('#submitPostButton').click((event) => {
 	});
 });
 
+// This doesn't work because the button is not there at the time when the pages loads
+// $('.likeButton').click((event) => {
+// 	alert('Button Clicked');
+// });
+
+$(document).on('click', '.likeButton', (event) => {
+	const button = $(event.target);
+	const postId = getPostIdFromElement(button);
+	console.log(postId);
+});
+
+function getPostIdFromElement(element) {
+	const isRootElement = element.hasClass('post');
+	// closest is a jQuery function that goes up through the tree to find a parent with a specified selector
+	const rootElement = isRootElement ? element : element.closest('.post');
+	// to get all data attributes .data()
+	const postId = rootElement.data().id;
+
+	if (postId === undefined) {
+		return alert('Post id undefined');
+	}
+
+	return postId;
+}
+
 function createPostHtml(postData) {
 	const postedBy = postData.postedBy;
 	const displayName = postedBy.firstName + ' ' + postedBy.lastName;
 	const timestamp = timeDifference(new Date(), new Date(postData.createdAt));
 
-	return `<div class='post'>
+	return `<div class='post' data-id='${postData._id}'>
                 <div class='mainContentContainer'>
                     <div class='userImageContainer'>
                         <img src='${postedBy.profilePic}'>
@@ -61,7 +86,7 @@ function createPostHtml(postData) {
                                 </button>
                             </div>
                             <div class='postButtonContainer'>
-                                <button>
+                                <button class='likeButton'>
                                     <i class='far fa-heart'></i>
                                 </button>
                             </div>
