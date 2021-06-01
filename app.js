@@ -65,6 +65,7 @@ app.get('/', requireLogin, (req, res, next) => {
 		pageTitle: 'Home',
 		// session.user is set either in login or signup
 		userLoggedIn: req.session.user,
+		userLoggedInJs: JSON.stringify(req.session.user),
 	};
 
 	// Render function takes two parameters

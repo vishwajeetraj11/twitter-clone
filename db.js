@@ -13,7 +13,7 @@ class Database {
 		);
 		mongoose
 			.connect(db, {
-				useFindAndModify: true,
+				useFindAndModify: false,
 				useNewUrlParser: true,
 				useUnifiedTopology: true,
 				useCreateIndex: true,
