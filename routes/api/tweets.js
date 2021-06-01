@@ -7,8 +7,17 @@ const router = express.Router();
 router.get('/', (req, res, next) => {
 	Tweet.find()
 		.populate({ path: 'postedBy' }) // populate('postedBy')
+		.populate('retweetData')
 		.sort({ createdAt: -1 })
-		.then((tweets) => res.status(200).send(tweets))
+		.then(async (tweets) => {
+			// Nested Populating
+
+			tweets = await User.populate(tweets, {
+				path: 'retweetData.postedBy',
+			});
+
+			res.status(200).send(tweets);
+		})
 		.catch((error) => {
 			console.log(error);
 			res.sendStatus(400);
@@ -76,34 +85,46 @@ router.put('/:id/like', async (req, res, next) => {
 });
 
 router.post('/:id/retweet', async (req, res, next) => {
-	return res.status(200).send('Yahiko!');
 	const tweetId = req.params.id;
 	const userId = req.session.user._id;
-	const isLiked =
-		req.session.user && req.session.user.likes.includes(tweetId);
 
-	// addToSet adds to a set
-	// $pull removes from a set
-	const option = isLiked ? '$pull' : '$addToSet';
+	// Try and Delete retweet
+	const deletedTweet = await Tweet.findOneAndDelete({
+		postedBy: userId,
+		retweetData: tweetId,
+	}).catch((error) => {
+		console.log(error);
+		res.sendStatus(400);
+	});
 
-	// Insert User Like
+	const option = deletedTweet !== null ? '$pull' : '$addToSet';
 
-	// Add To Array (Likes) : $addToSet - an operator that mongodb has allows to add to a set (a list where an item can exist in it only one time.)
+	let retweet = deletedTweet;
 
-	// User.findByIdAndUpdate(userId, {option: { likes: tweetId }}) // MongoDB doesn't allow this to work
+	if (retweet === null) {
+		retweet = await Tweet.create({
+			postedBy: userId,
+			retweetData: tweetId,
+		}).catch((error) => {
+			console.log(error);
+			res.sendStatus(400);
+		});
+	}
+
+	// // Insert User Retweet
 	req.session.user = await User.findByIdAndUpdate(
 		userId,
-		{ [option]: { likes: tweetId } },
+		{ [option]: { retweets: retweet._id } },
 		{ new: true }
 	).catch((error) => {
 		console.log(error);
 		res.sendStatus(400);
 	});
 
-	// Insert Tweet Like
+	// // Insert Tweet Retweet
 	const tweet = await Tweet.findByIdAndUpdate(
 		tweetId,
-		{ [option]: { likes: userId } },
+		{ [option]: { retweetUsers: userId } },
 		{ new: true }
 	).catch((error) => {
 		console.log(error);
