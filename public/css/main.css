@@ -244,3 +244,15 @@ nav a:hover {
 	color: var(--greyText);
 	margin-bottom: 5px;
 }
+
+.replyFlag {
+	margin-bottom: 5px;
+	font-size: 0.8rem;
+	font-weight: 400;
+	opacity: 0.8;
+	color: #444444;
+}
+
+.replyFlag a {
+	color: var(--blue);
+}

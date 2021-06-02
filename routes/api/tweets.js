@@ -34,10 +34,6 @@ router.get('/', async (req, res, next) => {
 });
 
 router.post('/', async (req, res, next) => {
-	if (req.body.replyTo) {
-		console.log(req.body);
-		return res.sendStatus(400);
-	}
 	if (!req.body.content) {
 		console.log('Content param not sent with request.');
 		return res.sendStatus(400);
@@ -47,6 +43,10 @@ router.post('/', async (req, res, next) => {
 		content: req.body.content,
 		postedBy: req.session.user,
 	};
+
+	if (req.body.replyTo) {
+		tweetData.replyTo = req.body.replyTo;
+	}
 
 	Tweet.create(tweetData)
 		.then(async (newTweet) => {
@@ -151,8 +151,11 @@ async function getTweets(filter) {
 	var results = await Tweet.find(filter)
 		.populate('postedBy')
 		.populate('retweetData')
+		.populate('replyTo')
 		.sort({ createdAt: -1 })
 		.catch((error) => console.log(error));
+
+	results = await User.populate(results, { path: 'replyTo.postedBy' });
 
 	return await User.populate(results, { path: 'retweetData.postedBy' });
 }
