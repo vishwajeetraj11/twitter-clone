@@ -140,6 +140,14 @@ router.post('/:id/retweet', async (req, res, next) => {
 	res.status(200).send(tweet);
 });
 
+router.delete('/:id', async (req,res,next) => {
+	await Tweet.findByIdAndDelete(req.params.id).catch(error => {
+		console.log(error)
+		res.sendStatus(400);
+	})
+	res.sendStatus(204);
+})
+
 async function getTweets(filter) {
 	var results = await Tweet.find(filter)
 		.populate('postedBy')

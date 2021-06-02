@@ -65,6 +65,32 @@ $('#replyModal').on('hidden.bs.modal', () =>
 	$('#originalPostContainer').html('')
 );
 
+$("#deletePostModal").on("show.bs.modal", (event) => {
+    var button = $(event.relatedTarget);
+    var postId = getPostIdFromElement(button);
+    $("#deletePostButton").data("id", postId);
+})
+
+// This does work because the button is there at the time when the pages loads in pug
+$("#deletePostButton").click((event) => {
+    var postId = $(event.target).data("id");
+
+    $.ajax({
+        url: `/api/tweets/${postId}`,
+        type: "DELETE",
+        success: (data, status, xhr) => {
+            if(xhr.status !== 204) {
+				alert('Could not delete post!')
+				return 
+			}
+
+			location.reload();
+
+        }
+    })
+})
+
+
 // This doesn't work because the button is not there at the time when the pages loads
 // $('.likeButton').click((event) => {
 // 	alert('Button Clicked');
@@ -191,6 +217,11 @@ function createPostHtml(postData, largeFont = false) {
                     </div>`;
 	}
 
+	let buttons = "";
+    if (postData.postedBy._id == userLoggedIn._id) {
+        buttons = `<button data-id="${postData._id}" data-toggle="modal" data-target="#deletePostModal"><i class='fas fa-times'></i></button>`;
+    }
+
 	return `<div class='post ${largeFontClass}' data-id='${postData._id}'>
 				<div class='postActionContainer'>
 					${retweetText}
@@ -206,6 +237,7 @@ function createPostHtml(postData, largeFont = false) {
 							}' class='displayName'>${displayName}</a>
                             <span class='username'>@${postedBy.username}</span>
                             <span class='date'>${timestamp}</span>
+							${buttons}
                         </div>
 						${replyFlag}
                         <div class='postBody'>
