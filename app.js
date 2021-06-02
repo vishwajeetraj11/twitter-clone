@@ -9,7 +9,8 @@ import session from 'express-session';
 import loginRoutes from './routes/loginRoutes.js';
 import logout from './routes/logout.js';
 import registerRoutes from './routes/registerRoutes.js';
-import tweetRoutes from './routes/api/tweets.js';
+import tweetRoutesAPI from './routes/api/tweets.js';
+import tweetRoutes from './routes/tweetRoutes.js';
 
 import DB from './db.js';
 dotenv.config();
@@ -49,9 +50,10 @@ app.set('views', 'views');
 app.use('/login', loginRoutes);
 app.use('/logout', logout);
 app.use('/register', registerRoutes);
+app.use('/tweets', requireLogin, tweetRoutes);
 
 // API Routes
-app.use('/api/tweets', tweetRoutes);
+app.use('/api/tweets', tweetRoutesAPI);
 
 // __dirname is not available if not using esModules , only available if using common js.
 const __dirname = path.resolve();

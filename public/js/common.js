@@ -57,7 +57,7 @@ $('#replyModal').on('show.bs.modal', (event) => {
 	$('#submitReplyButton').data('id', postId);
 
 	$.get('/api/tweets/' + postId, (results) => {
-		outputPosts(results, $('#originalPostContainer'));
+		outputPosts(results.tweetData, $('#originalPostContainer'));
 	});
 });
 
@@ -70,6 +70,7 @@ $('#replyModal').on('hidden.bs.modal', () =>
 // 	alert('Button Clicked');
 // });
 
+// Like
 $(document).on('click', '.likeButton', (event) => {
 	const button = $(event.target);
 	const postId = getPostIdFromElement(button);
@@ -119,6 +120,16 @@ $(document).on('click', '.retweetButton', (event) => {
 	});
 });
 
+$(document).on('click', '.post', (event) => {
+	const element = $(event.target);
+	const postId = getPostIdFromElement(element);
+
+	// !element.is('button') makes sure that we are not clicking a button. ex like retweet comment
+	if (postId !== undefined && !element.is('button')) {
+		window.location.href = '/tweets/' + postId;
+	}
+});
+
 function getPostIdFromElement(element) {
 	const isRootElement = element.hasClass('post');
 	// closest is a jQuery function that goes up through the tree to find a parent with a specified selector
@@ -133,7 +144,7 @@ function getPostIdFromElement(element) {
 	return postId;
 }
 
-function createPostHtml(postData) {
+function createPostHtml(postData, largeFont = false) {
 	// if (postData) return alert('post object is null');
 
 	const isRetweet = postData.retweetData !== undefined;
@@ -152,6 +163,7 @@ function createPostHtml(postData) {
 	)
 		? 'active'
 		: '';
+	const largeFontClass = largeFont ? 'largeFont' : '';
 
 	let retweetText = '';
 	if (isRetweet) {
@@ -166,7 +178,7 @@ function createPostHtml(postData) {
 	}
 
 	let replyFlag = '';
-	if (postData.replyTo) {
+	if (postData.replyTo && postData.replyTo._id) {
 		if (!postData.replyTo._id) {
 			return alert('Reply to is not populated');
 		} else if (!postData.replyTo.postedBy._id) {
@@ -179,7 +191,7 @@ function createPostHtml(postData) {
                     </div>`;
 	}
 
-	return `<div class='post' data-id='${postData._id}'>
+	return `<div class='post ${largeFontClass}' data-id='${postData._id}'>
 				<div class='postActionContainer'>
 					${retweetText}
 				</div>
@@ -251,4 +263,39 @@ function timeDifference(current, previous) {
 	} else {
 		return Math.round(elapsed / msPerYear) + ' years ago';
 	}
+}
+
+function outputPosts(tweets, container) {
+	container.html('');
+
+	if (!Array.isArray(tweets)) {
+		tweets = [tweets];
+	}
+
+	tweets.forEach((tweet) => {
+		// createPostHtml is defined in common.js
+		const html = createPostHtml(tweet);
+		container.append(html);
+	});
+
+	if (tweets.length === 0) {
+		container.append("<span class='noResults'>Nothing to show.</span>");
+	}
+}
+
+function outputPostsWithReplies(results, container) {
+	container.html('');
+
+	if (results.replyTo !== undefined && results.replyTo._id !== undefined) {
+		const html = createPostHtml(results.replyTo);
+		container.append(html);
+	}
+
+	const mainPostHtml = createPostHtml(results.tweetData, true);
+	container.append(mainPostHtml);
+
+	results.replies.forEach((result) => {
+		const html = createPostHtml(result);
+		container.append(html);
+	});
 }
