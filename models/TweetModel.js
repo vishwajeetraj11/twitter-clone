@@ -10,6 +10,7 @@ const TweetSchema = new Schema(
 		likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 		retweetUsers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 		retweetData: { type: Schema.Types.ObjectId, ref: 'Tweet' },
+		replyTo: { type: Schema.Types.ObjectId, ref: 'Tweet' },
 	},
 	{ timestamps: true }
 );
