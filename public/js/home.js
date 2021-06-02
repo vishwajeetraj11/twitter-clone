@@ -7,6 +7,10 @@ $(document).ready(() => {
 function outputPosts(tweets, container) {
 	container.html('');
 
+	if (!Array.isArray(tweets)) {
+		tweets = [tweets];
+	}
+
 	tweets.forEach((tweet) => {
 		// createPostHtml is defined in common.js
 		const html = createPostHtml(tweet);

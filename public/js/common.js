@@ -1,8 +1,12 @@
-$('#postTextarea').keyup((event) => {
+$('#postTextarea, #replyTextarea').keyup((event) => {
 	const textbox = $(event.target);
 	const value = textbox.val().trim();
 
-	const submitButton = $('#submitPostButton');
+	const isModal = textbox.parents('.modal').length === 1;
+
+	const submitButton = isModal
+		? $('#submitReplyButton')
+		: $('#submitPostButton');
 
 	if (submitButton.length === 0) return alert('No submit button found.');
 
@@ -14,13 +18,22 @@ $('#postTextarea').keyup((event) => {
 	submitButton.prop('disabled', false);
 });
 
-$('#submitPostButton').click((event) => {
+$('#submitPostButton, #submitReplyButton').click((event) => {
 	const button = $(event.target);
-	const textbox = $('#postTextarea');
+
+	const isModal = button.parents('.modal').length === 1;
+
+	const textbox = isModal ? $('#replyTextarea') : $('#postTextarea');
 
 	const data = {
 		content: textbox.val(),
 	};
+
+	if (isModal) {
+		const tweetId = button.data().id;
+		if (tweetId === null) return alert('Button id is null');
+		data.replyTo = tweetId;
+	}
 
 	$.post('/api/tweets', data, (postData, status, xhr) => {
 		const html = createPostHtml(postData);
@@ -29,6 +42,22 @@ $('#submitPostButton').click((event) => {
 		button.prop('disabled', true);
 	});
 });
+
+$('#replyModal').on('show.bs.modal', (event) => {
+	var button = $(event.relatedTarget);
+	var postId = getPostIdFromElement(button);
+
+	// Set id of post to submit button in modal in data attribute won't show in dom
+	$('#submitReplyButton').data('id', postId);
+
+	$.get('/api/tweets/' + postId, (results) => {
+		outputPosts(results, $('#originalPostContainer'));
+	});
+});
+
+$('#replyModal').on('hidden.bs.modal', () =>
+	$('#originalPostContainer').html('')
+);
 
 // This doesn't work because the button is not there at the time when the pages loads
 // $('.likeButton').click((event) => {

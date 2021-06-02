@@ -4,27 +4,40 @@ import Tweet from '../../models/TweetModel.js';
 
 const router = express.Router();
 
-router.get('/', (req, res, next) => {
-	Tweet.find()
-		.populate({ path: 'postedBy' }) // populate('postedBy')
-		.populate('retweetData')
-		.sort({ createdAt: -1 })
-		.then(async (tweets) => {
-			// Nested Populating
+router.get('/:id', async (req, res, next) => {
+	let tweet = await getTweets({ _id: req.params.id });
+	tweet = tweet[0];
+	res.status(200).send(tweet);
+});
 
-			tweets = await User.populate(tweets, {
-				path: 'retweetData.postedBy',
-			});
+router.get('/', async (req, res, next) => {
+	var results = await getTweets({});
+	res.status(200).send(results);
 
-			res.status(200).send(tweets);
-		})
-		.catch((error) => {
-			console.log(error);
-			res.sendStatus(400);
-		});
+	// Tweet.find()
+	// 	.populate({ path: 'postedBy' }) // populate('postedBy')
+	// 	.populate('retweetData')
+	// 	.sort({ createdAt: -1 })
+	// 	.then(async (tweets) => {
+	// 		// Nested Populating
+
+	// 		tweets = await User.populate(tweets, {
+	// 			path: 'retweetData.postedBy',
+	// 		});
+
+	// 		res.status(200).send(tweets);
+	// 	})
+	// 	.catch((error) => {
+	// 		console.log(error);
+	// 		res.sendStatus(400);
+	// 	});
 });
 
 router.post('/', async (req, res, next) => {
+	if (req.body.replyTo) {
+		console.log(req.body);
+		return res.sendStatus(400);
+	}
 	if (!req.body.content) {
 		console.log('Content param not sent with request.');
 		return res.sendStatus(400);
@@ -133,5 +146,15 @@ router.post('/:id/retweet', async (req, res, next) => {
 
 	res.status(200).send(tweet);
 });
+
+async function getTweets(filter) {
+	var results = await Tweet.find(filter)
+		.populate('postedBy')
+		.populate('retweetData')
+		.sort({ createdAt: -1 })
+		.catch((error) => console.log(error));
+
+	return await User.populate(results, { path: 'retweetData.postedBy' });
+}
 
 export default router;
