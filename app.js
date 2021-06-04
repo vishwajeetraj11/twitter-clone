@@ -12,6 +12,7 @@ import registerRoutes from './routes/registerRoutes.js';
 import tweetRoutesAPI from './routes/api/tweets.js';
 import tweetRoutes from './routes/tweetRoutes.js';
 import profileRoutes from './routes/profileRoutes.js';
+import userRoutesAPI from './routes/api/users.js';
 
 import DB from './db.js';
 dotenv.config();
@@ -56,6 +57,7 @@ app.use('/profile', requireLogin, profileRoutes);
 
 // API Routes
 app.use('/api/tweets', tweetRoutesAPI);
+app.use('/api/users', userRoutesAPI);
 
 // __dirname is not available if not using esModules , only available if using common js.
 const __dirname = path.resolve();

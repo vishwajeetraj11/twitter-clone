@@ -154,6 +154,39 @@ $(document).on('click', '.post', (event) => {
 	}
 });
 
+$(document).on('click', '.followButton', (e) => {
+	var button = $(e.target);
+	var userId = button.data().user;
+	$.ajax({
+		url: `/api/users/${userId}/follow`,
+		type: 'PUT',
+		success: (data, status, xhr) => {
+			if (xhr.status === 404) {
+				return;
+			}
+			let difference;
+			if (data?.following?.includes(userId)) {
+				button.addClass('following');
+				button.text('Following');
+				difference = 1;
+			} else {
+				button.removeClass('following');
+				button.text('Follow');
+				difference = -1;
+			}
+
+			const followersLabel = $('#followersValue');
+
+			// check if ithe followersValue button exist
+			if (followersLabel.length != 0) {
+				let followersText = followersLabel.text();
+				followersText = parseInt(followersText);
+				followersLabel.text(followersText + difference);
+			}
+		},
+	});
+});
+
 function getPostIdFromElement(element) {
 	const isRootElement = element.hasClass('post');
 	// closest is a jQuery function that goes up through the tree to find a parent with a specified selector
@@ -171,7 +204,7 @@ function getPostIdFromElement(element) {
 function createPostHtml(postData, largeFont = false) {
 	// if (postData) return alert('post object is null');
 
-	const isRetweet = postData.retweetData !== undefined;
+	const isRetweet = !!postData.retweetData;
 	const retweetedBy = isRetweet ? postData.postedBy.username : null;
 	postData = isRetweet ? postData.retweetData : postData;
 
