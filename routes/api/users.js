@@ -2,6 +2,9 @@ import express from 'express';
 const router = express.Router();
 import User from '../../models/UserModel.js';
 import Tweet from '../../models/TweetModel.js';
+import multer from 'multer';
+
+const upload = multer({ dest: 'uploads/' });
 
 router.put('/:userId/follow', async (req, res, next) => {
 	const userId = req.params.userId;
@@ -56,5 +59,18 @@ router.get('/:userId/followers', async (req, res, next) => {
 			res.sendStatus(400);
 		});
 });
+
+router.post(
+	'/profilePicture',
+	upload.single('croppedImage'),
+	async (req, res, next) => {
+		if (!req.file) {
+			console.log('No file uploaded in ajax request!');
+			return res.sendStatus(400);
+		}
+
+		res.sendStatus(200);
+	}
+);
 
 export default router;

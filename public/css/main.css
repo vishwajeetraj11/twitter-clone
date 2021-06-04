@@ -124,6 +124,7 @@ nav a:hover {
 .userImageContainer {
 	width: 50px;
 	height: 50px;
+	position: relative;
 }
 
 .userImageContainer img {
@@ -289,6 +290,10 @@ nav a:hover {
 	margin-left: var(--spacing);
 	position: absolute;
 	bottom: -66px;
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .profileHeaderContainer .userImageContainer img {
@@ -388,4 +393,26 @@ nav a:hover {
 .user .userDetailsContainer {
 	flex: 1;
 	padding: 0 var(--spacing);
+}
+
+.profilePictureButton {
+	position: absolute;
+	font-size: 50px;
+	color: rgba(0, 0, 0, 0.6);
+	display: none;
+}
+
+.userImageContainer:hover .profilePictureButton {
+	display: block;
+}
+
+.imagePreviewContainer {
+	width: 100%;
+	margin: 20px 0;
+}
+
+.imagePreviewContainer img {
+	height: 100%;
+	width: 100%;
+	object-fit: contain;
 }
