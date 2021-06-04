@@ -11,6 +11,7 @@ import logout from './routes/logout.js';
 import registerRoutes from './routes/registerRoutes.js';
 import tweetRoutesAPI from './routes/api/tweets.js';
 import tweetRoutes from './routes/tweetRoutes.js';
+import profileRoutes from './routes/profileRoutes.js';
 
 import DB from './db.js';
 dotenv.config();
@@ -51,6 +52,7 @@ app.use('/login', loginRoutes);
 app.use('/logout', logout);
 app.use('/register', registerRoutes);
 app.use('/tweets', requireLogin, tweetRoutes);
+app.use('/profile', requireLogin, profileRoutes);
 
 // API Routes
 app.use('/api/tweets', tweetRoutesAPI);

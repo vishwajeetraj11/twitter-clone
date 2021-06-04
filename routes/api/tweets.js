@@ -22,7 +22,13 @@ router.get('/:id', async (req, res, next) => {
 });
 
 router.get('/', async (req, res, next) => {
-	var results = await getTweets({});
+	const searchObj = req.query;
+	if (searchObj.isReply !== undefined) {
+		const isReply = searchObj.isReply === 'true';
+		searchObj.replyTo = { $exists: isReply };
+		delete searchObj.isReply;
+	}
+	const results = await getTweets(searchObj);
 	res.status(200).send(results);
 });
 
@@ -140,13 +146,13 @@ router.post('/:id/retweet', async (req, res, next) => {
 	res.status(200).send(tweet);
 });
 
-router.delete('/:id', async (req,res,next) => {
-	await Tweet.findByIdAndDelete(req.params.id).catch(error => {
-		console.log(error)
+router.delete('/:id', async (req, res, next) => {
+	await Tweet.findByIdAndDelete(req.params.id).catch((error) => {
+		console.log(error);
 		res.sendStatus(400);
-	})
+	});
 	res.sendStatus(204);
-})
+});
 
 async function getTweets(filter) {
 	var results = await Tweet.find(filter)
