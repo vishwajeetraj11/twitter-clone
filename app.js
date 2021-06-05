@@ -64,6 +64,7 @@ const __dirname = path.resolve();
 
 // Serve Static Files
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
 
 app.get('/', requireLogin, (req, res, next) => {
 	// Payload is just a term used to refer to a data that we are sending to a function or to a page or through request or something like that.
