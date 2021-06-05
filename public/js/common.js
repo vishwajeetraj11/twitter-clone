@@ -92,6 +92,12 @@ $('#deletePostButton').click((event) => {
 	});
 });
 
+$('#confirmPinModal').on('show.bs.modal', (event) => {
+	var button = $(event.relatedTarget);
+	var postId = getPostIdFromElement(button);
+	$('#pinPostButton').data('id', postId);
+});
+
 $('#filePhoto').change(function () {
 	if (this.files && this.files[0]) {
 		var reader = new FileReader();
@@ -177,6 +183,48 @@ $('#coverPhotoButton').click(() => {
 			contentType: false,
 			success: () => location.reload(),
 		});
+	});
+});
+
+$('#pinPostButton').click((event) => {
+	var postId = $(event.target).data('id');
+
+	$.ajax({
+		url: `/api/tweets/${postId}`,
+		type: 'PUT',
+		data: { pinned: true },
+		success: (data, status, xhr) => {
+			if (xhr.status != 200) {
+				alert('could not pin tweet!');
+				return;
+			}
+
+			location.reload();
+		},
+	});
+});
+
+$('#unpinModal').on('show.bs.modal', (event) => {
+	var button = $(event.relatedTarget);
+	var postId = getPostIdFromElement(button);
+	$('#unpinPostButton').data('id', postId);
+});
+
+$('#unpinPostButton').click((event) => {
+	var postId = $(event.target).data('id');
+
+	$.ajax({
+		url: `/api/tweets/${postId}`,
+		type: 'PUT',
+		data: { pinned: false },
+		success: (data, status, xhr) => {
+			if (xhr.status != 200) {
+				alert('could not unpin post');
+				return;
+			}
+
+			location.reload();
+		},
 	});
 });
 
@@ -340,8 +388,19 @@ function createPostHtml(postData, largeFont = false) {
 	}
 
 	let buttons = '';
+	let pinnedPostText = '';
 	if (postData.postedBy._id == userLoggedIn._id) {
-		buttons = `<button data-id="${postData._id}" data-toggle="modal" data-target="#deletePostModal"><i class='fas fa-times'></i></button>`;
+		let pinnedClass = '';
+		let dataTarget = '#confirmPinModal';
+		if (postData.pinned === true) {
+			pinnedClass = 'active';
+			dataTarget = '#unpinModal';
+			pinnedPostText =
+				"<i class='fas fa-thumbtack'></i> <span>Pinned post</span>";
+		}
+
+		buttons = `<button class='pinButton ${pinnedClass}' data-id="${postData._id}" data-toggle="modal" data-target="${dataTarget}"><i class='fas fa-thumbtack'></i></button>
+		<button data-id="${postData._id}" data-toggle="modal" data-target="#deletePostModal"><i class='fas fa-times'></i></button>`;
 	}
 
 	return `<div class='post ${largeFontClass}' data-id='${postData._id}'>
@@ -353,6 +412,7 @@ function createPostHtml(postData, largeFont = false) {
                         <img src='${postedBy.profilePic}'>
                     </div>
                     <div class='postContentContainer'>
+						<div class='pinnedPostText'>${pinnedPostText}</div>
                         <div class='header'>
                             <a href='/profile/${
 								postedBy.username

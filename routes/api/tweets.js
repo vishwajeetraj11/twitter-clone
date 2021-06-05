@@ -174,6 +174,25 @@ router.delete('/:id', async (req, res, next) => {
 	res.sendStatus(204);
 });
 
+router.put('/:id', async (req, res, next) => {
+	if (req.body.pinned !== undefined) {
+		await Tweet.updateMany(
+			{ postedBy: req.session.user },
+			{ pinned: false }
+		).catch((error) => {
+			console.log(error);
+			res.sendStatus(400);
+		});
+	}
+
+	Tweet.findByIdAndUpdate(req.params.id, req.body)
+		.then(() => res.sendStatus(200))
+		.catch((error) => {
+			console.log(error);
+			res.sendStatus(400);
+		});
+});
+
 async function getTweets(filter) {
 	var results = await Tweet.find(filter)
 		.populate('postedBy')
