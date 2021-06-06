@@ -218,6 +218,16 @@ $('#userSearchTextbox').keydown((event) => {
 	}, 1000);
 });
 
+$('#createChatButton').click(() => {
+	const data = JSON.stringify(selectedUsers);
+
+	$.post('/api/chats', { users: data }, (chat) => {
+		if (!chat || !chat._id) return alert('Invalid response from server.');
+
+		window.location.href = `/messages/${chat._id}`;
+	});
+});
+
 $('#pinPostButton').click((event) => {
 	var postId = $(event.target).data('id');
 
