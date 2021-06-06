@@ -18,6 +18,7 @@ import chatsRoutesAPI from './routes/api/chats.js';
 import messageRoutesAPI from './routes/api/messages.js';
 import searchRoutes from './routes/searchRoutes.js';
 import messagesRoutes from './routes/messagesRoutes.js';
+import notificationsRoutes from './routes/notificationRoutes.js';
 
 import DB from './db.js';
 dotenv.config();
@@ -66,6 +67,7 @@ app.use('/tweets', requireLogin, tweetRoutes);
 app.use('/profile', requireLogin, profileRoutes);
 app.use('/search', requireLogin, searchRoutes);
 app.use('/messages', requireLogin, messagesRoutes);
+app.use('/notifications', requireLogin, notificationsRoutes);
 
 // API Routes
 app.use('/api/tweets', tweetRoutesAPI);
