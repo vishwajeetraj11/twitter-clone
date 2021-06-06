@@ -14,6 +14,7 @@ import tweetRoutes from './routes/tweetRoutes.js';
 import profileRoutes from './routes/profileRoutes.js';
 import userRoutesAPI from './routes/api/users.js';
 import chatsRoutesAPI from './routes/api/chats.js';
+import messageRoutesAPI from './routes/api/messages.js';
 import searchRoutes from './routes/searchRoutes.js';
 import messagesRoutes from './routes/messagesRoutes.js';
 
@@ -64,6 +65,7 @@ app.use('/messages', requireLogin, messagesRoutes);
 app.use('/api/tweets', tweetRoutesAPI);
 app.use('/api/users', userRoutesAPI);
 app.use('/api/chats', chatsRoutesAPI);
+app.use('/api/messages', messageRoutesAPI);
 
 // __dirname is not available if not using esModules , only available if using common js.
 const __dirname = path.resolve();
