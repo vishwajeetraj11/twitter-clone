@@ -36,6 +36,7 @@ router.get('/', async (req, res, next) => {
 	// find loggedin user in the users array
 	Chat.find({ users: { $elemMatch: { $eq: req.session.user._id } } })
 		.populate('users')
+		.sort({ updatedAt: -1 })
 		.then((results) => res.status(200).send(results))
 		.catch((error) => {
 			console.log(error);
