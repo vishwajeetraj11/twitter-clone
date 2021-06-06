@@ -1,7 +1,12 @@
 $(document).ready(() => {
+	// Get Chat Room Name
 	$.get(`/api/chats/${chatId}`, (data) =>
 		$('#chatName').text(getChatName(data))
 	);
+	// Get Chat Messages
+	$.get(`/api/chats/${chatId}/messages`, (data) => {
+		console.log(data);
+	});
 });
 
 $('#chatNameButton').click(() => {

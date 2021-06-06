@@ -2,6 +2,7 @@ import express from 'express';
 const router = express.Router();
 import Chat from '../../models/ChatModel.js';
 import User from '../../models/UserModel.js';
+import Message from '../../models/MessageModel.js';
 
 router.post('/', async (req, res, next) => {
 	if (!req.body.users) {
@@ -65,6 +66,16 @@ router.get('/:chatId', async (req, res, next) => {
 		users: { $elemMatch: { $eq: req.session.user._id } },
 	})
 		.populate('users')
+		.then((results) => res.status(200).send(results))
+		.catch((error) => {
+			console.log(error);
+			res.sendStatus(400);
+		});
+});
+
+router.get('/:chatId/messages', async (req, res, next) => {
+	Message.find({ chat: req.params.chatId })
+		.populate('sender')
 		.then((results) => res.status(200).send(results))
 		.catch((error) => {
 			console.log(error);
