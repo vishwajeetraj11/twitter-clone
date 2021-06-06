@@ -11,7 +11,9 @@
 	--greenBackground: rgba(23, 191, 99, 0.1);
 	--redBackground: rgb(226, 34, 94, 0.1);
 }
-
+ul {
+	margin: 0;
+}
 * {
 	margin: 0;
 	padding: 0;
@@ -700,15 +702,23 @@ nav a:hover {
 	display: flex;
 	align-items: flex-end;
 	flex-shrink: 0;
-	-webkit-flex: 0;
-	flex: 0;
 }
 
+.typingDots img,
 .chatMessages .message .messageBody {
 	background-color: #f1f0f0;
 	padding: 6px 12px;
 	border-radius: 18px;
 	font-size: 14px;
+}
+
+.typingDots img {
+	height: 35px;
+}
+
+.typingDots {
+	padding: 0 var(--spacing);
+	display: none;
 }
 
 .chatMessages .message .messageContainer {

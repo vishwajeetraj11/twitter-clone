@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import path from 'path';
 import session from 'express-session';
+import { Server, Socket } from 'socket.io';
 
 // Import Routes
 import loginRoutes from './routes/loginRoutes.js';
@@ -32,6 +33,11 @@ const port = 3000;
 
 const server = app.listen(port, () => {
 	console.log(`Server listening on port: ${port}`);
+});
+
+const io = new Server(server, {
+	pingTimeout: 60000,
+	// allowEIO3: true, // false by default // this needs to be provided when using v4 on server and v2.3 on client
 });
 
 // Sessions
@@ -87,4 +93,37 @@ app.get('/', requireLogin, (req, res, next) => {
 	// 1. View
 	// 2. Payload (any data that we want to send to that page)
 	res.status(200).render('home', payload);
+});
+
+// Setting up the socket.io connection (ready to accept the connection)
+//                   Client ||
+io.on('connection', (socket) => {
+	// Register an event listener
+	// socket is willing to accept an event called setup, and when it receives that, its going to run that callback
+	socket.on('setup', (userData) => {
+		socket.join(userData._id);
+		// emit event (connected)
+		socket.emit('connected');
+	});
+
+	socket.on('join room', (room) => socket.join(room));
+	socket.on('typing', (chatId) => {
+		socket.in(chatId).emit('typing');
+	});
+	socket.on('stop typing', (room) => socket.in(room).emit('stop typing'));
+
+	socket.on('new message', (newMessage) => {
+		const chat = newMessage.chat;
+
+		if (!chat.users) return console.log('Chat.users not defined');
+
+		chat.users.forEach((user) => {
+			// Don't emit event if to the user who sent this message
+			if (user._id == newMessage.sender._id) return;
+			socket.in(user._id).emit('message received', newMessage);
+		});
+	});
+});
+io.on('connect_error', (err) => {
+	console.log(`connect_error due to ${err.message}`);
 });

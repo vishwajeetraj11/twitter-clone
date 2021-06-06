@@ -1,6 +1,7 @@
 import express from 'express';
 import Message from '../../models/MessageModel.js';
 import Chat from '../../models/ChatModel.js';
+import User from '../../models/UserModel.js';
 
 const router = express.Router();
 router.post('/', async (req, res, next) => {
@@ -19,6 +20,7 @@ router.post('/', async (req, res, next) => {
 		.then(async (message) => {
 			message = await message.populate('sender').execPopulate();
 			message = await message.populate('chat').execPopulate();
+			message = await User.populate(message, { path: 'chat.users' });
 
 			Chat.findByIdAndUpdate(req.body.chatId, {
 				latestMessage: message,

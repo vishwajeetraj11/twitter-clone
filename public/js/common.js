@@ -672,3 +672,12 @@ function getOtherChatUsers(users) {
 
 	return users.filter((user) => user._id != userLoggedIn._id);
 }
+
+function messageReceived(newMessage) {
+	if ($('.chatContainer').length == 0) {
+		// They are not on the chat page if that div is not founf
+		// Show popup notification
+	} else {
+		addChatMessageHtml(newMessage);
+	}
+}
