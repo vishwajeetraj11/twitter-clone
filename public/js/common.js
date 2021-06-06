@@ -42,7 +42,6 @@ $('#submitPostButton, #submitReplyButton').click((event) => {
 
 	$.post('/api/tweets', data, (postData, status, xhr) => {
 		// Success Callback
-
 		if (postData.replyTo) {
 			location.reload();
 		} else {

@@ -1,7 +1,7 @@
 import express from 'express';
 const router = express.Router();
 import User from '../../models/UserModel.js';
-import Tweet from '../../models/TweetModel.js';
+import Notification from '../../models/NotificationModel.js';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -56,6 +56,16 @@ router.put('/:userId/follow', async (req, res, next) => {
 		console.log(error);
 		res.sendStatus(400);
 	});
+
+	// if user x wasn't following this user and they went ahead and started this request that means they clicked on follow
+	if (!isFollowing) {
+		await Notification.insertNotification(
+			userId,
+			req.session.user._id,
+			'follow',
+			req.session.user._id
+		);
+	}
 
 	res.status(200).send(req.session.user);
 });

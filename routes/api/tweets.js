@@ -1,6 +1,7 @@
 import express from 'express';
 import User from '../../models/UserModel.js';
 import Tweet from '../../models/TweetModel.js';
+import Notification from '../../models/NotificationModel.js';
 
 const router = express.Router();
 
@@ -75,6 +76,16 @@ router.post('/', async (req, res, next) => {
 	Tweet.create(tweetData)
 		.then(async (newTweet) => {
 			newTweet = await User.populate(newTweet, { path: 'postedBy' });
+			newTweet = await Tweet.populate(newTweet, { path: 'replyTo' });
+
+			if (newTweet.replyTo !== undefined) {
+				await Notification.insertNotification(
+					newTweet.replyTo.postedBy,
+					req.session.user._id,
+					'reply',
+					newTweet._id
+				);
+			}
 
 			res.status(201).send(newTweet);
 		})
@@ -117,6 +128,16 @@ router.put('/:id/like', async (req, res, next) => {
 		console.log(error);
 		res.sendStatus(400);
 	});
+
+	// isLiked would be false if there was no like which means user logged in has now inserted alike
+	if (!isLiked) {
+		await Notification.insertNotification(
+			tweet.postedBy,
+			userId,
+			'tweetLike',
+			tweet._id
+		);
+	}
 
 	res.status(200).send(tweet);
 });
@@ -167,6 +188,17 @@ router.post('/:id/retweet', async (req, res, next) => {
 		console.log(error);
 		res.sendStatus(400);
 	});
+
+	// if there is no deletedTweet then it was a retweet not a removal of retweet
+	// Send Notification
+	if (!deletedTweet) {
+		await Notification.insertNotification(
+			tweet.postedBy,
+			userId,
+			'retweet',
+			tweet._id
+		);
+	}
 
 	res.status(200).send(tweet);
 });
