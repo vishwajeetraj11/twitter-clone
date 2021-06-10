@@ -367,6 +367,17 @@ $(document).on('click', '.followButton', (e) => {
 	});
 });
 
+$(document).on('click', '.notification.active', (e) => {
+	const container = $(e.target);
+	const notificationId = container.data().id;
+
+	const href = container.attr('href');
+	e.preventDefault();
+
+	const callback = () => (window.location = href);
+	markNotificationsAsOpened(notificationId, callback);
+});
+
 function getPostIdFromElement(element) {
 	const isRootElement = element.hasClass('post');
 	// closest is a jQuery function that goes up through the tree to find a parent with a specified selector
@@ -679,4 +690,18 @@ function messageReceived(newMessage) {
 	} else {
 		addChatMessageHtml(newMessage);
 	}
+}
+
+function markNotificationsAsOpened(notificationId = null, callback = null) {
+	if (callback == null) callback = () => location.reload();
+
+	var url =
+		notificationId != null
+			? `/api/notifications/${notificationId}/markAsOpened`
+			: `/api/notifications/markAsOpened`;
+	$.ajax({
+		url: url,
+		type: 'PUT',
+		success: () => callback(),
+	});
 }
