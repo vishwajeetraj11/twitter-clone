@@ -114,6 +114,9 @@ io.on('connection', (socket) => {
 	socket.on('typing', (chatId) => {
 		socket.in(chatId).emit('typing');
 	});
+	socket.on('notification received', (chatId) => {
+		socket.in(chatId).emit('notification received');
+	});
 	socket.on('stop typing', (room) => socket.in(room).emit('stop typing'));
 
 	socket.on('new message', (newMessage) => {
