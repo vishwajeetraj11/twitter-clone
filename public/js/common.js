@@ -48,7 +48,7 @@ $('#submitPostButton, #submitReplyButton').click((event) => {
 	$.post('/api/tweets', data, (postData, status, xhr) => {
 		// Success Callback
 		if (postData.replyTo) {
-			emitNotification(postData.replyTo.postedBy)
+			emitNotification(postData.replyTo.postedBy);
 			location.reload();
 		} else {
 			const html = createPostHtml(postData);
@@ -298,7 +298,7 @@ $(document).on('click', '.likeButton', (event) => {
 			// userLoggedIn is injected in mainLayout pug and is global
 			if (postData.likes.includes(userLoggedIn._id)) {
 				button.addClass('active');
-				emitNotification(postData.postedBy)
+				emitNotification(postData.postedBy);
 			} else {
 				button.removeClass('active');
 			}
@@ -324,7 +324,7 @@ $(document).on('click', '.retweetButton', (event) => {
 			// userLoggedIn is injected in mainLayout pug and is global
 			if (postData.retweetUsers.includes(userLoggedIn._id)) {
 				button.addClass('active');
-				emitNotification(postData.postedBy)
+				emitNotification(postData.postedBy);
 			} else {
 				button.removeClass('active');
 			}
@@ -693,10 +693,10 @@ function getOtherChatUsers(users) {
 }
 
 function messageReceived(newMessage) {
-	if ($('.chatContainer').length == 0) {
+	if ($(`[data-room="${newMessage.chat._id}"]`).length == 0) {
 		// They are not on the chat page if that div is not found
 		// Show popup notification
-		showMessagePopup(newMessage)
+		showMessagePopup(newMessage);
 	} else {
 		addChatMessageHtml(newMessage);
 	}
@@ -718,28 +718,25 @@ function markNotificationsAsOpened(notificationId = null, callback = null) {
 	});
 }
 
-
 function showNotificationPopup(data) {
-    const html = createNotificationHtml(data);
-    const element = $(html);
-    element.hide().prependTo("#notificationList").slideDown('fast');
+	const html = createNotificationHtml(data);
+	const element = $(html);
+	element.hide().prependTo('#notificationList').slideDown('fast');
 
-    setTimeout(() => element.fadeOut(400), 5000);
+	setTimeout(() => element.fadeOut(400), 5000);
 }
 
 function showMessagePopup(data) {
+	if (!data.chat.latestMessage._id) {
+		data.chat.latestMessage = data;
+	}
 
-    if(!data.chat.latestMessage._id) {
-        data.chat.latestMessage = data;
-    }
+	var html = createChatHtml(data.chat);
+	var element = $(html);
+	element.hide().prependTo('#notificationList').slideDown('fast');
 
-    var html = createChatHtml(data.chat);
-    var element = $(html);
-    element.hide().prependTo("#notificationList").slideDown("fast");
-
-    setTimeout(() => element.fadeOut(400), 5000);
+	setTimeout(() => element.fadeOut(400), 5000);
 }
-
 
 function refreshNotificationsBadge() {
 	$.get('/api/notifications', { unreadOnly: true }, (data) => {
@@ -762,7 +759,6 @@ function refreshMessagesBadge() {
 		}
 	});
 }
-
 
 function outputNotificationList(notifications, container) {
 	notifications.forEach((notification) => {
@@ -836,7 +832,13 @@ function createChatHtml(chatData) {
 	var image = getChatImageElements(chatData); // TODO
 	var latestMessage = getLatestMessage(chatData.latestMessage);
 
-	return `<a href='/messages/${chatData._id}' class='resultListItem'>
+	var activeClass =
+		!chatData.latestMessage ||
+		chatData.latestMessage.readBy.includes(userLoggedIn._id)
+			? ''
+			: 'active';
+
+	return `<a href='/messages/${chatData._id}' class='resultListItem ${activeClass}'>
 				${image}
                 <div class='resultsDetailsContainer ellipsis'>
                     <span class='heading ellipsis'>${chatName}</span>
