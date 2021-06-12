@@ -3,10 +3,16 @@ import express from 'express';
 const router = express.Router();
 
 router.get('/', async (req, res, next) => {
-	Notification.find({
+	const searchObj = {
 		userTo: req.session.user._id,
-		notificationType: { $ne: 'newMessage' }, // $ne = not equal to
-	})
+		notificationType: { $ne: 'newMessage' },
+	};
+
+	if (req.query.unreadOnly !== undefined && req.query.unreadOnly == 'true') {
+		searchObj.opened = false;
+	}
+
+	Notification.find(searchObj)
 		.populate('userTo')
 		.populate('userFrom')
 		.sort({ createdAt: -1 })
