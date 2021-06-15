@@ -6,10 +6,12 @@ import path from 'path';
 import session from 'express-session';
 import { Server, Socket } from 'socket.io';
 
+import AppError from './utils/AppError.js';
+import globalErrorHandler from './controllers/errorController.js';
 // Import Routes
 import loginRoutes from './routes/loginRoutes.js';
 import logout from './routes/logout.js';
-import registerRoutes from './routes/registerRoutes.js';
+import signupRoutes from './routes/signupRoutes.js';
 import tweetRoutesAPI from './routes/api/tweets.js';
 import tweetRoutes from './routes/tweetRoutes.js';
 import profileRoutes from './routes/profileRoutes.js';
@@ -27,9 +29,7 @@ dotenv.config();
 const app = express();
 
 // This allows to read from body (req.body)
-// app.use(express.json())
-// this works in case of pug ->
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
 
 const port = process.env.PORT || 3000;
 
@@ -63,7 +63,7 @@ app.set('views', 'views');
 // Routes
 app.use('/login', loginRoutes);
 app.use('/logout', logout);
-app.use('/register', registerRoutes);
+app.use('/signup', signupRoutes);
 app.use('/tweets', requireLogin, tweetRoutes);
 app.use('/profile', requireLogin, profileRoutes);
 app.use('/search', requireLogin, searchRoutes);
@@ -134,3 +134,19 @@ io.on('connection', (socket) => {
 io.on('connect_error', (err) => {
 	console.log(`connect_error due to ${err.message}`);
 });
+
+// all runs for all http methods
+app.all('*', (req, res, next) => {
+	// res.status(404).json({
+	//   status: 'fail',
+	//   message: `Can't find ${req.originalUrl} on the server!`
+	// });
+
+	// const err = new Error(`Can't find ${req.originalUrl} on the server!`);
+	// err.status = 'fail';
+	// err.statusCode = 404;
+
+	next(new AppError(`Can't find ${req.originalUrl} on the server!`, 404));
+});
+
+app.use(globalErrorHandler);
