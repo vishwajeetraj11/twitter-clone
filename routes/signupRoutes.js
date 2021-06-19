@@ -2,14 +2,12 @@ import express from 'express';
 import User from '../models/UserModel.js';
 import bcrypt from 'bcrypt';
 import AppError from '../utils/AppError.js';
+import generateToken from '../utils/generateToken.js';
 
 const app = express();
 
 const router = express.Router();
 
-router.get('/', (req, res, next) => {
-	res.status(200).render('register');
-});
 router.post('/', async (req, res, next) => {
 	const { firstName, lastName, username, email, password } = req.body;
 
@@ -42,6 +40,12 @@ router.post('/', async (req, res, next) => {
 		email,
 		password,
 		username
+	})
+
+	res.status(201).json({
+		status: 'success',
+		user: newUser,
+		token: generateToken(newUser._id)
 	})
 
 });
