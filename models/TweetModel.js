@@ -18,6 +18,18 @@ const TweetSchema = new Schema(
 	}
 );
 
+// pre('save') is the middleware that runs before your document gets stored in the db. 
+// pre('init') gets called on your documents when they are returned from mongodb queries.
+// pre('remove') gets called on your documents when they are removed from db.
+// TweetSchema.pre('init', function(next) {
+//     console.log('Init')
+// });
+
+// TweetSchema.pre('remove', function(next) {
+// 	console.log('ran')
+//     // this.model('Voucher').remove({ user: this._id }, next);
+// });
+
 // Virtual Populate List
 // TweetSchema.virtual('retweets').get(async function() {
 // 	return await Retweet.countDocuments({ tweet: this._id })
