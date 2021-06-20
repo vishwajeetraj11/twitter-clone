@@ -9,22 +9,69 @@ import Retweet from '../../models/RetweetModel.js';
 
 const router = express.Router();
 
-router.get('/:id', async (req, res, next) => {
-	let tweetData = await getTweets({ _id: req.params.id });
-	tweetData = tweetData[0];
+// Get a Tweet/Retweet/Reply
+router.get(
+	'/:id',
+	catchAsync(async (req, res, next) => {
+		const tweetId = req.params.id;
 
-	const results = {
-		tweetData: tweetData,
-	};
+		let tweet = await Tweet.findById(tweetId)
+			.populate({
+				path: 'user',
+				select: 'firstName lastName profilePic username',
+			})
+			.populate('retweet replyTo');
 
-	if (tweetData.replyTo !== undefined) {
-		results.replyTo = tweetData.replyTo;
-	}
+		tweet = await User.populate(tweet, {path: 'retweet.user'})
 
-	results.replies = await getTweets({ replyTo: req.params.id });
+		if (!tweet) {
+			return next(
+				new AppError(
+					`The tweet you are looking for doesn't exist!`,
+					404
+				)
+			);
+		}
 
-	res.status(200).send(results);
-});
+		// Total retweets
+		const retweets = await Retweet.countDocuments({
+			tweet: tweet._id,
+		});
+
+		// Total likes
+		const likes = await Like.countDocuments({
+			tweet: tweet._id,
+		});
+
+		// Populate All the users of replies
+		let replies = await Tweet.find({
+			replyTo: tweet._id,
+		}).populate({
+			path: 'user',
+			select: 'firstName lastName profilePic username',
+		});
+
+		const likedByLoggedInUser = await Like.findOne({
+			user: req.user._id,
+			tweet: tweet._id,
+		});
+
+		const retweetedByLoggedInUser = await Retweet.findOne({
+			user: req.user._id,
+			tweet: tweet._id,
+		});
+
+		res.status(200).json({
+			status: 'success',
+			tweet,
+			retweets,
+			likes,
+			replies,
+			retweetByMe: !!retweetedByLoggedInUser,
+			likedByMe: !!likedByLoggedInUser,
+		});
+	})
+);
 
 router.get('/', async (req, res, next) => {
 	const searchObj = req.query;
@@ -91,81 +138,138 @@ router.post(
 	})
 );
 
+// Create Reply
+router.post(
+	'/:id/reply',
+	catchAsync(async (req, res, next) => {
+		const tweetId = req.params.id;
+		const { content } = req.body;
+		let replyTo = tweetId;
+
+		if (!content) {
+			return next(
+				new AppError(
+					'Please enter something. A Reply cannot be empty!',
+					400
+				)
+			);
+		}
+
+		const tweet = await Tweet.findById(tweetId).populate('retweet');
+
+		if (!tweet) {
+			return next(
+				new AppError(
+					'The tweet you are replying to no longer exists!',
+					404
+				)
+			);
+		}
+
+		if(tweet.retweet) {
+			replyTo = tweet.retweet._id;
+		}
+
+		let replyTweet = await Tweet.create({
+			content,
+			replyTo,
+			user: req.user._id,
+		});
+
+		replyTweet = await Tweet.populate(replyTweet, {path: 'replyTo'})
+		replyTweet = await User.populate(replyTweet, {path: 'user replyTo.user'})
+
+		res.status(201).json({
+			status: 'success',
+			replyTweet,
+		});
+	})
+);
+
 // Toggle Like
-router.post('/:tweetId/like', async (req, res, next) => {
-	// Tweet To like or unlike
-	const tweet = req.params.tweetId;
-	// LoggedIn User
-	const user = req.user._id;
+router.post(
+	'/:tweetId/like',
+	catchAsync(async (req, res, next) => {
+		// Tweet To like or unlike
+		const tweet = req.params.tweetId;
+		// LoggedIn User
+		const user = req.user._id;
 
-	const alreadyLiked = await Like.findOne({
-		user,
-		tweet,
-	});
-
-	// Like
-	if (!alreadyLiked) {
-		const createLike = await Like.create({
+		const alreadyLiked = await Like.findOne({
 			user,
 			tweet,
 		});
-		res.status(201).json({
-			status: 'success',
-			like: true,
-			likeAction: 'liked',
-			like: createLike,
+
+		// Like
+		if (!alreadyLiked) {
+			const createLike = await Like.create({
+				user,
+				tweet,
+			});
+			res.status(201).json({
+				status: 'success',
+				like: true,
+				likeAction: 'liked',
+				like: createLike,
+			});
+			return;
+		}
+
+		await Like.findOneAndDelete({
+			user,
+			tweet,
 		});
-		return;
-	}
-
-	await Like.findOneAndDelete({
-		user,
-		tweet,
-	});
-	res.sendStatus(204);
-});
-
-router.post('/:id/retweet', async (req, res, next) => {
-	const tweetId = req.params.id;
-	const userId = req.user._id;
-
-	// Try and Delete retweet => undo retweet
-	const deletedRetweet = await Retweet.findOneAndDelete({
-		user: userId,
-		tweet: tweetId,
-	});
-	await Tweet.findOneAndDelete({
-		user: userId,
-		retweet: tweetId
+		res.sendStatus(204);
 	})
+);
 
-	// Retweet
-	if (!deletedRetweet) {
-		await Retweet.create({
+// Retweet
+router.post(
+	'/:id/retweet',
+	catchAsync(async (req, res, next) => {
+		const tweetId = req.params.id;
+		const userId = req.user._id;
+
+		// Try and Delete retweet => undo retweet
+		const deletedRetweet = await Retweet.findOneAndDelete({
 			user: userId,
 			tweet: tweetId,
 		});
-
-		let newTweet = await Tweet.create({
+		await Tweet.findOneAndDelete({
 			user: userId,
 			retweet: tweetId,
-		})
-		
-		newTweet = await newTweet.populate('retweet').execPopulate();
-		newTweet = await newTweet.populate({
-			path: 'user',
-			select: 'firstName lastName profilePic username' // '+firstName +lastName +profilePic -username' - Exclude Include Populate
-		}).execPopulate();
-
-		res.status(201).json({
-			status: 'success',
-			tweet: newTweet,
 		});
-		return;
-	}
 
-	res.sendStatus(204);
-});
+		// Retweet
+		if (!deletedRetweet) {
+			await Retweet.create({
+				user: userId,
+				tweet: tweetId,
+			});
+
+			let newTweet = await Tweet.create({
+				user: userId,
+				retweet: tweetId,
+			});
+
+			newTweet = await newTweet.populate('retweet').execPopulate();
+			newTweet = await newTweet
+				.populate({
+					path: 'user',
+					select: 'firstName lastName profilePic username', // '+firstName +lastName +profilePic -username' - Exclude Include Populate
+				})
+				.execPopulate();
+
+			res.status(201).json({
+				status: 'success',
+				tweet: newTweet,
+			});
+			return;
+		}
+
+		res.sendStatus(204);
+	})
+);
 
 router.delete('/:id', async (req, res, next) => {
 	await Tweet.findByIdAndDelete(req.params.id).catch((error) => {

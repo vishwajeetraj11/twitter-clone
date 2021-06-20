@@ -22,14 +22,15 @@ const RetweetSchema = new mongoose.Schema(
 	}
 );
 
-// RetweetSchema.pre(/^find/, async function(next) {
-//     this.populate({
-//       path: 'userTo userFrom',
-//       select: 'profilePic firstName lastName fullName username'
-//     });
-
-//     next();
-//   });
+RetweetSchema.pre(/^find/, async function(next) {
+    this.populate({
+      path: 'retweet',
+    }).populate({
+        path: 'user',
+        select: 'profilePic firstName lastName fullName username'
+    });
+    next();
+  });
 
 const Retweet = mongoose.model('Retweet', RetweetSchema);
 export default Retweet;

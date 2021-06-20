@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import Retweet from './RetweetModel.js';
 
 const Schema = mongoose.Schema;
 
@@ -10,15 +11,17 @@ const TweetSchema = new Schema(
 		retweet: { type: Schema.Types.ObjectId, ref: 'Tweet' },
 		replyTo: { type: Schema.Types.ObjectId, ref: 'Tweet' },
 	},
-	{ timestamps: true }
+	{
+		toJSON: { virtuals: true },
+		toObject: { virtuals: true },
+		timestamps: true,
+	}
 );
 
-// Virtual Populate retweetUsers List
-TweetSchema.virtual('retweetUsers', {
-	ref: 'Retweet',
-	foreignField: 'tweet',
-	localField: '_id'
-  });
+// Virtual Populate List
+// TweetSchema.virtual('retweets').get(async function() {
+// 	return await Retweet.countDocuments({ tweet: this._id })
+// })
 
 const Tweet = mongoose.model('Tweet', TweetSchema);
 export default Tweet;
