@@ -41,7 +41,6 @@ const UserSchema = new mongoose.Schema(
 		},
 		likes: [{ type: Schema.Types.ObjectId, ref: 'Tweet' }],
 		retweets: [{ type: Schema.Types.ObjectId, ref: 'Tweet' }],
-		following: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 		followers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 	},
 	{
@@ -50,6 +49,13 @@ const UserSchema = new mongoose.Schema(
 		timestamps: true,
 	}
 );
+
+// Virtual Populate following List
+UserSchema.virtual('following', {
+	ref: 'Follow',
+	foreignField: 'userFrom',
+	localField: '_id'
+  });
 
 UserSchema.virtual('fullName').get(function () {
 	return this.firstName + ' ' + this.lastName;

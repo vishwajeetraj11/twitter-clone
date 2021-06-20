@@ -1,14 +1,18 @@
 import express from 'express';
 const router = express.Router();
 import User from '../../models/UserModel.js';
+import Follow from '../../models/FollowModel.js';
 import Notification from '../../models/NotificationModel.js';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { catchAsync } from '../../utils/catchAsync.js';
+import AppError from '../../utils/AppError.js';
 const __dirname = path.resolve();
 
 const upload = multer({ dest: 'uploads/' });
 
+// Search for users
 router.get('/', async (req, res, next) => {
 	var searchObj = req.query;
 
@@ -30,69 +34,115 @@ router.get('/', async (req, res, next) => {
 		});
 });
 
-router.put('/:userId/follow', async (req, res, next) => {
-	const userId = req.params.userId;
+// Toggle Follow
+router.post(
+	'/:userId/follow',
+	catchAsync(async (req, res, next) => {
+		// User To follow or unfollow
+		const userTo = req.params.userId;
+		// LoggedIn User
+		const userFrom = req.user._id;
 
-	const user = await User.findById(userId);
-
-	if (user == null) return res.sendStatus(404);
-
-	const isFollowing =
-		user.followers && user.followers.includes(req.session.user._id);
-	const option = isFollowing ? '$pull' : '$addToSet';
-
-	req.session.user = await User.findByIdAndUpdate(
-		req.session.user._id,
-		{ [option]: { following: userId } },
-		{ new: true }
-	).catch((error) => {
-		console.log(error);
-		res.sendStatus(400);
-	});
-
-	User.findByIdAndUpdate(userId, {
-		[option]: { followers: req.session.user._id },
-	}).catch((error) => {
-		console.log(error);
-		res.sendStatus(400);
-	});
-
-	// if user x wasn't following this user and they went ahead and started this request that means they clicked on follow
-	if (!isFollowing) {
-		await Notification.insertNotification(
-			userId,
-			req.session.user._id,
-			'follow',
-			req.session.user._id
-		);
-	}
-
-	res.status(200).send(req.session.user);
-});
-
-router.get('/:userId/following', async (req, res, next) => {
-	User.findById(req.params.userId)
-		.populate('following')
-		.then((results) => {
-			res.status(200).send(results);
-		})
-		.catch((error) => {
-			console.log(error);
-			res.sendStatus(400);
+		const alreadyFollows = await Follow.findOne({
+			userTo,
+			userFrom,
 		});
-});
 
-router.get('/:userId/followers', async (req, res, next) => {
-	User.findById(req.params.userId)
-		.populate('followers')
-		.then((results) => {
-			res.status(200).send(results);
-		})
-		.catch((error) => {
-			console.log(error);
-			res.sendStatus(400);
+		// Follow
+		if (!alreadyFollows) {
+			const createFollow = await Follow.create({
+				userTo,
+				userFrom,
+			});
+			res.status(201).json({
+				status: 'success',
+				follow: true,
+				followAction: 'followed',
+				follow: createFollow,
+			});
+			return;
+		}
+
+		await Follow.findOneAndDelete({
+			userTo,
+			userFrom,
 		});
-});
+		res.sendStatus(204);
+
+		// Insert Send Notification to the user who got followed not in case of unfollow
+		// // if user x wasn't following this user and they went ahead and started this request that means they clicked on follow
+		// if (!isFollowing) {
+		// 	await Notification.insertNotification(
+		// 		userId,
+		// 		req.session.user._id,
+		// 		'follow',
+		// 		req.session.user._id
+		// 	);
+		// }
+
+		// res.status(200).send(req.session.user);
+	})
+);
+
+// Get a user following list
+router.get(
+	'/:userId/following',
+	catchAsync(async (req, res, next) => {
+		const userFrom = req.params.userId;
+
+		const following = await Follow.find({ userFrom })
+			.select('userTo')
+			.populate({
+				path: 'userTo',
+				select: 'profilePic firstName lastName fullName username _id',
+			});
+
+		if (!following) {
+			return next(
+				new AppError(
+					'Cannot get following list, Please try again later.',
+					400
+				)
+			);
+		}
+
+		res.status(200).json({
+			status: 'success',
+			count: following.length,
+			following,
+		});
+	})
+);
+
+// Get a user followers list
+router.get(
+	'/:userId/followers',
+	catchAsync(async (req, res, next) => {
+		const userTo = req.params.userId;
+
+		const followers = await Follow.find({ userTo })
+			.select('userFrom')
+			.populate({
+				path: 'userFrom',
+				select: 'profilePic firstName lastName fullName username _id',
+			});
+
+		if (!followers) {
+			return next(
+				new AppError(
+					'Cannot get followers list, Please try again later.',
+					400
+				)
+			);
+		}
+
+		res.status(200).json({
+			status: 'success',
+			count: followers.length,
+			followers,
+		});
+	})
+);
 
 router.post(
 	'/profilePicture',

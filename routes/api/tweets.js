@@ -58,6 +58,7 @@ router.get('/', async (req, res, next) => {
 	res.status(200).send(results);
 });
 
+// Create Tweet
 router.post('/', async (req, res, next) => {
 	if (!req.body.content) {
 		console.log('Content param not sent with request.');
@@ -211,6 +212,7 @@ router.delete('/:id', async (req, res, next) => {
 	res.sendStatus(204);
 });
 
+// Pin Tweet
 router.put('/:id', async (req, res, next) => {
 	if (req.body.pinned !== undefined) {
 		await Tweet.updateMany(

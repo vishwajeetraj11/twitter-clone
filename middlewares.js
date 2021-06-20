@@ -1,5 +1,6 @@
 import User from './models/UserModel.js';
 import { catchAsync } from './utils/catchAsync.js';
+import jwt from "jsonwebtoken"
 
 export const requireLogin = (req, res, next) => {
 	if (req.session && req.session.user) {

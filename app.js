@@ -1,5 +1,5 @@
 import express from 'express';
-import { requireLogin } from './middlewares.js';
+import { protect, requireLogin } from './middlewares.js';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -72,7 +72,7 @@ app.use('/notifications', requireLogin, notificationsRoutes);
 
 // API Routes
 app.use('/api/tweets', tweetRoutesAPI);
-app.use('/api/users', userRoutesAPI);
+app.use('/api/users', protect, userRoutesAPI);
 app.use('/api/chats', chatsRoutesAPI);
 app.use('/api/messages', messageRoutesAPI);
 app.use('/api/notifications', notificationRoutesAPI);
