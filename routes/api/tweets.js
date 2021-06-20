@@ -5,6 +5,7 @@ import Notification from '../../models/NotificationModel.js';
 import AppError from '../../utils/AppError.js';
 import { catchAsync } from '../../utils/catchAsync.js';
 import Like from '../../models/LikeModel.js';
+import Retweet from '../../models/RetweetModel.js';
 
 const router = express.Router();
 
@@ -61,7 +62,7 @@ router.get('/', async (req, res, next) => {
 	res.status(200).send(results);
 });
 
-// Create Tweet 
+// Create Tweet
 router.post(
 	'/',
 	catchAsync(async (req, res, next) => {
@@ -80,20 +81,18 @@ router.post(
 
 		const newTweet = await Tweet.create({
 			content,
-			author: req.user._id,
+			user: req.user._id,
 		});
 
 		res.status(201).json({
 			status: 'success',
-			newTweet
-		})
-
+			newTweet,
+		});
 	})
 );
 
 // Toggle Like
 router.post('/:tweetId/like', async (req, res, next) => {
-
 	// Tweet To like or unlike
 	const tweet = req.params.tweetId;
 	// LoggedIn User
@@ -104,7 +103,7 @@ router.post('/:tweetId/like', async (req, res, next) => {
 		tweet,
 	});
 
-	// Follow
+	// Like
 	if (!alreadyLiked) {
 		const createLike = await Like.create({
 			user,
@@ -128,63 +127,44 @@ router.post('/:tweetId/like', async (req, res, next) => {
 
 router.post('/:id/retweet', async (req, res, next) => {
 	const tweetId = req.params.id;
-	const userId = req.session.user._id;
+	const userId = req.user._id;
 
-	// Try and Delete retweet
-	const deletedTweet = await Tweet.findOneAndDelete({
-		postedBy: userId,
-		retweetData: tweetId,
-	}).catch((error) => {
-		console.log(error);
-		res.sendStatus(400);
+	// Try and Delete retweet => undo retweet
+	const deletedRetweet = await Retweet.findOneAndDelete({
+		user: userId,
+		tweet: tweetId,
 	});
+	await Tweet.findOneAndDelete({
+		user: userId,
+		retweet: tweetId
+	})
 
-	const option = deletedTweet !== null ? '$pull' : '$addToSet';
-
-	let retweet = deletedTweet;
-
-	if (retweet === null) {
-		retweet = await Tweet.create({
-			postedBy: userId,
-			retweetData: tweetId,
-		}).catch((error) => {
-			console.log(error);
-			res.sendStatus(400);
+	// Retweet
+	if (!deletedRetweet) {
+		await Retweet.create({
+			user: userId,
+			tweet: tweetId,
 		});
+
+		let newTweet = await Tweet.create({
+			user: userId,
+			retweet: tweetId,
+		})
+		
+		newTweet = await newTweet.populate('retweet').execPopulate();
+		newTweet = await newTweet.populate({
+			path: 'user',
+			select: 'firstName lastName profilePic username' // '+firstName +lastName +profilePic -username' - Exclude Include Populate
+		}).execPopulate();
+
+		res.status(201).json({
+			status: 'success',
+			tweet: newTweet,
+		});
+		return;
 	}
 
-	// // Insert User Retweet
-	req.session.user = await User.findByIdAndUpdate(
-		userId,
-		{ [option]: { retweets: retweet._id } },
-		{ new: true }
-	).catch((error) => {
-		console.log(error);
-		res.sendStatus(400);
-	});
-
-	// // Insert Tweet Retweet
-	const tweet = await Tweet.findByIdAndUpdate(
-		tweetId,
-		{ [option]: { retweetUsers: userId } },
-		{ new: true }
-	).catch((error) => {
-		console.log(error);
-		res.sendStatus(400);
-	});
-
-	// if there is no deletedTweet then it was a retweet not a removal of retweet
-	// Send Notification
-	if (!deletedTweet) {
-		await Notification.insertNotification(
-			tweet.postedBy,
-			userId,
-			'retweet',
-			tweet._id
-		);
-	}
-
-	res.status(200).send(tweet);
+	res.sendStatus(204);
 });
 
 router.delete('/:id', async (req, res, next) => {

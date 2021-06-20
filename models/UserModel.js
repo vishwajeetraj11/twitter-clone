@@ -39,9 +39,6 @@ const UserSchema = new mongoose.Schema(
 		coverPhoto: {
 			type: String,
 		},
-		likes: [{ type: Schema.Types.ObjectId, ref: 'Tweet' }],
-		retweets: [{ type: Schema.Types.ObjectId, ref: 'Tweet' }],
-		followers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 	},
 	{
 		toJSON: { virtuals: true },
@@ -54,6 +51,13 @@ const UserSchema = new mongoose.Schema(
 UserSchema.virtual('following', {
 	ref: 'Follow',
 	foreignField: 'userFrom',
+	localField: '_id'
+  });
+
+// Virtual Populate followers List
+UserSchema.virtual('followers', {
+	ref: 'Follow',
+	foreignField: 'userTo',
 	localField: '_id'
   });
 

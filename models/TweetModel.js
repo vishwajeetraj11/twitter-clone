@@ -5,15 +5,20 @@ const Schema = mongoose.Schema;
 const TweetSchema = new Schema(
 	{
 		content: { type: String, trim: true },
-		author: { type: Schema.Types.ObjectId, ref: 'User' },
+		user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
 		pinned: { type: Boolean, default: false },
-		likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-		retweetUsers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-		retweetData: { type: Schema.Types.ObjectId, ref: 'Tweet' },
+		retweet: { type: Schema.Types.ObjectId, ref: 'Tweet' },
 		replyTo: { type: Schema.Types.ObjectId, ref: 'Tweet' },
 	},
 	{ timestamps: true }
 );
 
-var Tweet = mongoose.model('Tweet', TweetSchema);
+// Virtual Populate retweetUsers List
+TweetSchema.virtual('retweetUsers', {
+	ref: 'Retweet',
+	foreignField: 'tweet',
+	localField: '_id'
+  });
+
+const Tweet = mongoose.model('Tweet', TweetSchema);
 export default Tweet;
