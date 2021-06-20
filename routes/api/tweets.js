@@ -233,8 +233,13 @@ router.post(
 		const userId = req.user._id;
 
 		const tweet = await Tweet.findById(tweetId);
-		if(!tweet) {
-			return next(new AppError('The tweet you are retweeting is no longer available!', 404))
+		if (!tweet) {
+			return next(
+				new AppError(
+					'The tweet you are retweeting is no longer available!',
+					404
+				)
+			);
 		}
 
 		// Try and Delete retweet => undo retweet
@@ -283,10 +288,15 @@ router.delete(
 	catchAsync(async (req, res, next) => {
 		const tweetId = req.params.id;
 
-		const tweet = await Tweet.findById(tweetId)
+		const tweet = await Tweet.findById(tweetId);
 
-		if(!tweet) {
-			return next(new AppError('The tweet you are trying to delete is already deleted!', 404));
+		if (!tweet) {
+			return next(
+				new AppError(
+					'The tweet you are trying to delete is already deleted!',
+					404
+				)
+			);
 		}
 
 		const likes = await Like.deleteMany({
@@ -294,16 +304,16 @@ router.delete(
 		});
 
 		const retweetModel = await Retweet.deleteMany({
-			tweet: tweetId
-		})
+			tweet: tweetId,
+		});
 
 		const retweets = await Tweet.find({
 			retweet: tweetId,
 		});
 
-		retweets.forEach(async retweet => {
+		retweets.forEach(async (retweet) => {
 			await Like.deleteMany({ tweet: retweet._id });
-		})
+		});
 
 		const retweetsDelete = await Tweet.deleteMany({
 			retweet: tweetId,
@@ -315,38 +325,55 @@ router.delete(
 
 		replies.forEach(async (reply) => {
 			await Like.deleteMany({ _id: reply._id });
-			await Retweet.deleteMany({ tweet: reply._id })
+			await Retweet.deleteMany({ tweet: reply._id });
 		});
 
 		const repliesDelete = await Tweet.deleteMany({
 			replyTo: tweetId,
 		});
 
-	    tweet.remove();
+		tweet.remove();
 
-		res.sendStatus(204)
+		res.sendStatus(204);
 	})
 );
 
 // Pin Tweet
-router.put('/:id', async (req, res, next) => {
-	if (req.body.pinned !== undefined) {
-		await Tweet.updateMany(
-			{ postedBy: req.session.user },
-			{ pinned: false }
-		).catch((error) => {
-			console.log(error);
-			res.sendStatus(400);
-		});
-	}
+router.patch(
+	'/:id',
+	catchAsync(async (req, res, next) => {
+		const tweetId = req.params.id;
 
-	Tweet.findByIdAndUpdate(req.params.id, req.body)
-		.then(() => res.sendStatus(200))
-		.catch((error) => {
-			console.log(error);
-			res.sendStatus(400);
+		const { pinned } = req.body;
+
+		const tweet = await Tweet.findById(tweetId);
+
+		if (!tweet) {
+			return next(
+				new AppError(
+					'The tweet you are trying to pin no longer exists!',
+					404
+				)
+			);
+		}
+
+		await Tweet.updateMany({ user: req.user._id }, { pinned: false });
+
+		const pinnedTweet = await Tweet.findByIdAndUpdate(
+			tweetId,
+			{
+				pinned: true,
+			},
+			{
+				new: true,
+			}
+		);
+		res.status(200).json({
+			status: 'success',
+			tweet: pinnedTweet,
 		});
-});
+	})
+);
 
 async function getTweets(filter) {
 	var results = await Tweet.find(filter)
