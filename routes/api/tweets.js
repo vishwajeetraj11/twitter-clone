@@ -22,7 +22,7 @@ router.get(
 			})
 			.populate('retweet replyTo');
 
-		tweet = await User.populate(tweet, {path: 'retweet.user'})
+		tweet = await User.populate(tweet, { path: 'retweet.user' });
 
 		if (!tweet) {
 			return next(
@@ -166,7 +166,7 @@ router.post(
 			);
 		}
 
-		if(tweet.retweet) {
+		if (tweet.retweet) {
 			replyTo = tweet.retweet._id;
 		}
 
@@ -176,8 +176,10 @@ router.post(
 			user: req.user._id,
 		});
 
-		replyTweet = await Tweet.populate(replyTweet, {path: 'replyTo'})
-		replyTweet = await User.populate(replyTweet, {path: 'user replyTo.user'})
+		replyTweet = await Tweet.populate(replyTweet, { path: 'replyTo' });
+		replyTweet = await User.populate(replyTweet, {
+			path: 'user replyTo.user',
+		});
 
 		res.status(201).json({
 			status: 'success',
@@ -230,6 +232,11 @@ router.post(
 		const tweetId = req.params.id;
 		const userId = req.user._id;
 
+		const tweet = await Tweet.findById(tweetId);
+		if(!tweet) {
+			return next(new AppError('The tweet you are retweeting is no longer available!', 404))
+		}
+
 		// Try and Delete retweet => undo retweet
 		const deletedRetweet = await Retweet.findOneAndDelete({
 			user: userId,
@@ -271,13 +278,55 @@ router.post(
 	})
 );
 
-router.delete('/:id', async (req, res, next) => {
-	await Tweet.findByIdAndDelete(req.params.id).catch((error) => {
-		console.log(error);
-		res.sendStatus(400);
-	});
-	res.sendStatus(204);
-});
+router.delete(
+	'/:id',
+	catchAsync(async (req, res, next) => {
+		const tweetId = req.params.id;
+
+		const tweet = await Tweet.findById(tweetId)
+
+		if(!tweet) {
+			return next(new AppError('The tweet you are trying to delete is already deleted!', 404));
+		}
+
+		const likes = await Like.deleteMany({
+			tweet: tweetId,
+		});
+
+		const retweetModel = await Retweet.deleteMany({
+			tweet: tweetId
+		})
+
+		const retweets = await Tweet.find({
+			retweet: tweetId,
+		});
+
+		retweets.forEach(async retweet => {
+			await Like.deleteMany({ tweet: retweet._id });
+		})
+
+		const retweetsDelete = await Tweet.deleteMany({
+			retweet: tweetId,
+		});
+
+		const replies = await Tweet.find({
+			replyTo: tweetId,
+		});
+
+		replies.forEach(async (reply) => {
+			await Like.deleteMany({ _id: reply._id });
+			await Retweet.deleteMany({ tweet: reply._id })
+		});
+
+		const repliesDelete = await Tweet.deleteMany({
+			replyTo: tweetId,
+		});
+
+	    tweet.remove();
+
+		res.sendStatus(204)
+	})
+);
 
 // Pin Tweet
 router.put('/:id', async (req, res, next) => {

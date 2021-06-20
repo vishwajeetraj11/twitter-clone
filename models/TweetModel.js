@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import Retweet from './RetweetModel.js';
 
 const Schema = mongoose.Schema;
 
