@@ -71,7 +71,7 @@ app.use('/messages', requireLogin, messagesRoutes);
 app.use('/notifications', requireLogin, notificationsRoutes);
 
 // API Routes
-app.use('/api/tweets', tweetRoutesAPI);
+app.use('/api/tweets', protect, tweetRoutesAPI);
 app.use('/api/users', protect, userRoutesAPI);
 app.use('/api/chats', chatsRoutesAPI);
 app.use('/api/messages', messageRoutesAPI);

@@ -2,6 +2,9 @@ import express from 'express';
 import User from '../../models/UserModel.js';
 import Tweet from '../../models/TweetModel.js';
 import Notification from '../../models/NotificationModel.js';
+import AppError from '../../utils/AppError.js';
+import { catchAsync } from '../../utils/catchAsync.js';
+import Like from '../../models/LikeModel.js';
 
 const router = express.Router();
 
@@ -58,89 +61,69 @@ router.get('/', async (req, res, next) => {
 	res.status(200).send(results);
 });
 
-// Create Tweet
-router.post('/', async (req, res, next) => {
-	if (!req.body.content) {
-		console.log('Content param not sent with request.');
-		return res.sendStatus(400);
-	}
+// Create Tweet 
+router.post(
+	'/',
+	catchAsync(async (req, res, next) => {
+		// Tweet content from body
+		const { content } = req.body;
 
-	const tweetData = {
-		content: req.body.content,
-		postedBy: req.session.user,
-	};
+		// No content error.
+		if (!content) {
+			return next(
+				new AppError(
+					'Please enter something. A Tweet cannot be empty.',
+					400
+				)
+			);
+		}
 
-	if (req.body.replyTo) {
-		tweetData.replyTo = req.body.replyTo;
-	}
-
-	Tweet.create(tweetData)
-		.then(async (newTweet) => {
-			newTweet = await User.populate(newTweet, { path: 'postedBy' });
-			newTweet = await Tweet.populate(newTweet, { path: 'replyTo' });
-
-			if (newTweet.replyTo !== undefined) {
-				await Notification.insertNotification(
-					newTweet.replyTo.postedBy,
-					req.session.user._id,
-					'reply',
-					newTweet._id
-				);
-			}
-
-			res.status(201).send(newTweet);
-		})
-		.catch((error) => {
-			console.log(error);
-			res.sendStatus(400);
+		const newTweet = await Tweet.create({
+			content,
+			author: req.user._id,
 		});
-});
 
-router.put('/:id/like', async (req, res, next) => {
-	const tweetId = req.params.id;
-	const userId = req.session.user._id;
-	const isLiked =
-		req.session.user && req.session.user.likes.includes(tweetId);
+		res.status(201).json({
+			status: 'success',
+			newTweet
+		})
 
-	// addToSet adds to a set
-	// $pull removes from a set
-	const option = isLiked ? '$pull' : '$addToSet';
+	})
+);
 
-	// Insert User Like
+// Toggle Like
+router.post('/:tweetId/like', async (req, res, next) => {
 
-	// Add To Array (Likes) : $addToSet - an operator that mongodb has allows to add to a set (a list where an item can exist in it only one time.)
+	// Tweet To like or unlike
+	const tweet = req.params.tweetId;
+	// LoggedIn User
+	const user = req.user._id;
 
-	// User.findByIdAndUpdate(userId, {option: { likes: tweetId }}) // MongoDB doesn't allow this to work
-	req.session.user = await User.findByIdAndUpdate(
-		userId,
-		{ [option]: { likes: tweetId } },
-		{ new: true }
-	).catch((error) => {
-		console.log(error);
-		res.sendStatus(400);
+	const alreadyLiked = await Like.findOne({
+		user,
+		tweet,
 	});
 
-	// Insert Tweet Like
-	const tweet = await Tweet.findByIdAndUpdate(
-		tweetId,
-		{ [option]: { likes: userId } },
-		{ new: true }
-	).catch((error) => {
-		console.log(error);
-		res.sendStatus(400);
-	});
-
-	// isLiked would be false if there was no like which means user logged in has now inserted alike
-	if (!isLiked) {
-		await Notification.insertNotification(
-			tweet.postedBy,
-			userId,
-			'tweetLike',
-			tweet._id
-		);
+	// Follow
+	if (!alreadyLiked) {
+		const createLike = await Like.create({
+			user,
+			tweet,
+		});
+		res.status(201).json({
+			status: 'success',
+			like: true,
+			likeAction: 'liked',
+			like: createLike,
+		});
+		return;
 	}
 
-	res.status(200).send(tweet);
+	await Like.findOneAndDelete({
+		user,
+		tweet,
+	});
+	res.sendStatus(204);
 });
 
 router.post('/:id/retweet', async (req, res, next) => {

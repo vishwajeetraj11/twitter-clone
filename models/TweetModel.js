@@ -5,8 +5,8 @@ const Schema = mongoose.Schema;
 const TweetSchema = new Schema(
 	{
 		content: { type: String, trim: true },
-		postedBy: { type: Schema.Types.ObjectId, ref: 'User' },
-		pinned: Boolean,
+		author: { type: Schema.Types.ObjectId, ref: 'User' },
+		pinned: { type: Boolean, default: false },
 		likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 		retweetUsers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 		retweetData: { type: Schema.Types.ObjectId, ref: 'Tweet' },
