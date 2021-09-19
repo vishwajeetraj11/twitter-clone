@@ -2,7 +2,7 @@ var connected = false;
 
 // const socket = io();
 
-const socket = io('http://localhost:3000/');
+const socket = io('https://twitter-clone-v1.herokuapp.com/');
 // const socket = new WebSocket('ws://localhost:3000');
 // var socket = io.connect('http://localhost:3000');
 
